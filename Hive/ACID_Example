@@ -1,0 +1,420 @@
+Creation of table for performing ACID Functionality in hive:
+
+1)Create Table which will have ACID properties
+
+hive>create table customer_acid_enable 
+(customer_id int,
+account_num bigint,
+lname       varchar(30),
+fname       varchar(30),
+mi          varchar(30),
+address1    varchar(30),
+address2    varchar(30),
+address3    varchar(30),
+address4    varchar(30),
+city        varchar(30),
+state_province          varchar(30),
+postal_code varchar(30),
+customer_region_id      int,
+phone1      varchar(30),
+phone2      varchar(30),
+birthdate   date,
+marital_status          varchar(30),
+yearly_income           varchar(30),
+gender      varchar(30),
+total_children          smallint,
+num_children_at_home    smallint,
+education   varchar(30),
+date_accnt_opened       date,
+member_card varchar(30),
+occupation  varchar(30),
+houseowner  varchar(30),
+num_cars_owned          int,
+fullname    varchar(60)
+)
+PARTITIONED BY (country string)
+CLUSTERED BY(customer_region_id) INTO 10 BUCKETS
+STORED AS ORC TBLPROPERTIES ('transactional'='true');
+
+
+2)Verify table created successfully using describe extended function
+hive> desc extended customer_acid_enable;
+
+3)Set hive properties to add record into ACID enable table and performing ACID operation
+hive>SET hive.exec.dynamic.partition=true;
+hive>SET hive.exec.dynamic.partition.mode=nonstrict;
+hive>SET hive.enforce.bucketing=true;
+
+
+Before inserting record print table data
+hive>select * from customer_acid_enable;
+
+Before inserting record get total record present in hive table
+hive>select count(*) from customer_acid_enable;
+
+
+Insert record to ACID Enable table from other table using Insert query
+hive>INSERT INTO customer_acid_enable partition (country) select customer_id,account_num,lname
+,fname,mi,address1,address2,address3,address4,city,state_province,postal_code,customer_region_id,
+phone1,phone2,birthdate,marital_status,yearly_income,gender,total_children,num_children_at_home,
+education,date_accnt_opened,member_card,occupation,houseowner,num_cars_owned,fullname,country from customer ;
+
+
+Find total number of distinct country present in table which is similar to partition count because we created partition on country table
+hive> select distinct(country) from foodmart.customer_acid_enable;
+Query ID = root_20171123070655_1df54e5a-31b6-435b-a553-e98c11738a91
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1511370450022_0004)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED      1          1        0        0       0       0
+Reducer 2 ......   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 2.65 s
+--------------------------------------------------------------------------------
+OK
+Canada
+Mexico
+USA
+Time taken: 4.22 seconds, Fetched: 3 row(s)
+
+
+Print table sample data to make sure data loaded correctly in table
+hive> select * from foodmart.customer_acid_enable limit 10;
+OK
+7912    63473151922     Zarr    Corey   S.      1200 Rosemarie Pl                               Royal Oak       BC      54583   100     116-555-6141 974-555-9791    1921-08-03      M       $10K - $30K     M       0       0       Partial High School     1991-05-27      Normal  Manual       N       0       Corey Zarr      Canada
+8685    70648254200     Kindle  Dayna   A.      5243 Harmony Way                                Royal Oak       BC      87683   100     259-555-5864 701-555-7456    1919-04-23      M       $110K - $130K   M       1       0       High School Degree      1993-01-21      Bronze  Management   Y       2       Dayna Kindle    Canada
+5816    45604586601     Landreth        Barbara J.      990 Bernauer                            Royal Oak       BC      55982   100     685-555-2426 643-555-6076    1959-02-24      M       $30K - $50K     M       2       0       High School Degree      1990-01-13      Bronze  Manual       Y       1       Barbara Landreth        Canada
+10119   85743045210     Wood    Amy     M.      6866 Franklin Canyon Rd.                                Richmond        BC      53625   90  115-555-4463     534-555-7428    1953-04-05      M       $30K - $50K     F       2       0       High School Degree      1992-02-11      Bronze       Manual  Y       2       Amy Wood        Canada
+7941    63706133961     Valerio Dawn    D.      202 Southbrook Dr.                              Richmond        BC      66746   90      788-555-9637 660-555-9401    1924-02-10      S       $50K - $70K     M       0       0       Bachelors Degree        1993-02-21      Bronze  Professional N       2       Dawn Valerio    Canada
+2898    23401517900     Noble   Michelle        I.      7876 Clinton Dr Unit E                  Royal Oak       BC      38474   100     534-555-3165 469-555-8186    1966-08-23      M       $110K - $130K   M       3       3       Partial High School     1990-11-03      Golden  Professional Y       3       Michelle Noble  Canada
+7227    57555812597     Cook    Leo     A.      8633 Donegal Road                               Richmond        BC      75816   90      701-555-3773 836-555-5823    1953-07-15      S       $50K - $70K     M       4       0       Bachelors Degree        1991-01-09      Bronze  Professional N       1       Leo Cook        Canada
+9983    84415818500     Tammy   Geraldine               7770 Springwood Court                           Royal Oak       BC      50763   100 148-555-2173     237-555-6967    1957-01-16      S       $70K - $90K     F       3       0       Bachelors Degree        1990-04-07      Bronze       Professional    N       2       Geraldine Tammy Canada
+7957    63822230696     Stockham        David   G       3111 Creekridge Lane                            Royal Oak       BC      88618   100 307-555-2440     419-555-5861    1933-03-03      M       $70K - $90K     F       3       3       High School Degree      1994-09-26      Golden       Professional    Y       2       David Stockham  Canada
+3741    29753396500     Clayton Fereshteh               1907 Pinecrest Dr                               Royal Oak       BC      44935   100 586-555-1832     129-555-3425    1922-11-05      M       $150K + M       0       0       High School Degree      1991-06-19      Golden  Management   Y       3       Fereshteh Clayton       Canada
+Time taken: 0.289 seconds, Fetched: 10 row(s)
+
+
+Get total record present in table
+hive> select count(*) from  foodmart.customer;
+Query ID = root_20171123070857_1c8646b1-529a-4e40-945a-a72ce1203e56
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1511370450022_0004)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED      1          1        0        0       0       0
+Reducer 2 ......   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 4.78 s
+--------------------------------------------------------------------------------
+OK
+10281
+Time taken: 5.953 seconds, Fetched: 1 row(s)
+
+Print particular column record from table 
+hive> select fullname,lname,fname from foodmart.customer_acid_enable limit 10;
+OK
+Corey Zarr      Zarr    Corey
+Dayna Kindle    Kindle  Dayna
+Barbara Landreth        Landreth        Barbara
+Amy Wood        Wood    Amy
+Dawn Valerio    Valerio Dawn
+Michelle Noble  Noble   Michelle
+Leo Cook        Cook    Leo
+Geraldine Tammy Tammy   Geraldine
+David Stockham  Stockham        David
+Fereshteh Clayton       Clayton Fereshteh
+Time taken: 0.165 seconds, Fetched: 10 row(s)
+hive> select * from foodmart.customer_acid_enable where fullname='Corey Zarr';
+OK
+7912    63473151922     Zarr    Corey   S.      1200 Rosemarie Pl                               Royal Oak       BC      54583   100     116-555-6141 974-555-9791    1921-08-03      M       $10K - $30K     M       0       0       Partial High School     1991-05-27      Normal  Manual       N       0       Corey Zarr      Canada
+Time taken: 0.799 seconds, Fetched: 1 row(s)
+
+
+hive> select count(*) from  foodmart.customer;
+Query ID = root_20171123070857_1c8646b1-529a-4e40-945a-a72ce1203e56
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1511370450022_0004)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED      1          1        0        0       0       0
+Reducer 2 ......   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 4.78 s
+--------------------------------------------------------------------------------
+OK
+10281
+Time taken: 5.953 seconds, Fetched: 1 row(s)
+
+---------------------------Delete record from table-------------------------
+hive> delete from foodmart.customer_acid_enable where fullname='Corey Zarr';
+Query ID = root_20171123071103_19c4a262-094d-49a7-be5e-ce49c53e00de
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1511370450022_0004)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED     30         30        0        0       2       0
+Reducer 2 ......   SUCCEEDED     10         10        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 29.59 s
+--------------------------------------------------------------------------------
+Loading data to table foodmart.customer_acid_enable partition (country=null)
+         Time taken to load dynamic partitions: 0.274 seconds
+        Loading partition {country=Canada}
+         Time taken for adding to write entity : 0
+Partition foodmart.customer_acid_enable{country=Canada} stats: [numFiles=11, numRows=0, totalSize=135658, rawDataSize=0]
+OK
+Time taken: 32.708 seconds
+
+
+hive> select * from foodmart.customer_acid_enable where fullname='Corey Zarr';
+OK
+Time taken: 0.368 seconds
+
+hive> select count(*) from  foodmart.customer;
+Query ID = root_20171123071320_c15b7dc0-afd0-4bd9-a4d9-0457b5af1f57
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1511370450022_0004)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED      1          1        0        0       0       0
+Reducer 2 ......   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 3.20 s
+--------------------------------------------------------------------------------
+OK
+10281
+Time taken: 3.995 seconds, Fetched: 1 row(s)
+
+hive> select * from foodmart.customer_acid_enable where fullname='Corey Zarr';
+OK
+Time taken: 0.145 seconds
+hive> select count(*) from foodmart.customer_acid_enable where fullname='Corey Zarr';
+Query ID = root_20171123071512_44fb06ac-c095-40cf-82e6-922c55e034d7
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1511370450022_0004)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED     30         30        0        0      12       0
+Reducer 2 ......   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 40.06 s
+--------------------------------------------------------------------------------
+OK
+0
+Time taken: 40.809 seconds, Fetched: 1 row(s)
+
+-----------Use Analyze command to make sure table updated with latest count------------------
+hive> ANALYZE TABLE foodmart.customer_acid_enable PARTITION(country) COMPUTE STATISTICS;
+Partition foodmart.customer_acid_enable{country=Mexico} stats: [numFiles=8, numRows=1205, totalSize=99150, rawDataSize=2390085]
+Partition foodmart.customer_acid_enable{country=Canada} stats: [numFiles=11, numRows=1718, totalSize=135658, rawDataSize=3397980]
+Partition foodmart.customer_acid_enable{country=USA} stats: [numFiles=10, numRows=7359, totalSize=439208, rawDataSize=14569296]
+OK
+Time taken: 0.899 seconds
+hive> select count(*) from foodmart.customer_acid_enable;
+Query ID = root_20171123071735_8b400728-d3f7-46a5-bfd8-80f16fb461a5
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1511370450022_0004)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED     30         30        0        0       0       0
+Reducer 2 ......   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 22.13 s
+--------------------------------------------------------------------------------
+OK
+10280
+Time taken: 22.977 seconds, Fetched: 1 row(s)
+------------------------------------------------------------------------------------------------
+
+-------------------------Update Record------------------------------------------------------
+hive> select * from foodmart.customer_acid_enable where fullname='Michelle Noble';
+OK
+2898    23401517900     Noble   Michelle        I.      7876 Clinton Dr Unit E                  Royal Oak       BC      38474   100     534-555-3165 469-555-8186    1966-08-23      M       $110K - $130K   M       3       3       Partial High School     1990-11-03      Golden  Professional Y       3       Michelle Noble  Canada
+Time taken: 0.113 seconds, Fetched: 1 row(s)
+
+
+hive> update foodmart.customer_acid_enable set occupation='IT Developer' where fullname='Michelle Noble';
+Query ID = root_20171123072815_0cfcc027-284d-4aa7-a8dc-96fa5c9bfa76
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1511370450022_0004)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED     30         30        0        0       3       0
+Reducer 2 ......   SUCCEEDED     10         10        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 26.93 s
+--------------------------------------------------------------------------------
+Loading data to table foodmart.customer_acid_enable partition (country=null)
+         Time taken to load dynamic partitions: 0.169 seconds
+        Loading partition {country=Canada}
+         Time taken for adding to write entity : 0
+Partition foodmart.customer_acid_enable{country=Canada} stats: [numFiles=12, numRows=1718, totalSize=138449, rawDataSize=3397980]
+OK
+Time taken: 28.306 seconds
+
+
+hive> select * from foodmart.customer_acid_enable where fullname='Michelle Noble';
+OK
+2898    23401517900     Noble   Michelle        I.      7876 Clinton Dr Unit E                  Royal Oak       BC      38474   100     534-555-3165 469-555-8186    1966-08-23      M       $110K - $130K   M       3       3       Partial High School     1990-11-03      Golden  IT Developer Y       3       Michelle Noble  Canada
+Time taken: 0.166 seconds, Fetched: 1 row(s)
+
+
+hive> show transactions;
+OK
+Transaction ID  Transaction State       Started Time    Last Heartbeat Time     User    Hostname
+Time taken: 0.201 seconds, Fetched: 1 row(s)
+hive> show locks;
+OK
+Lock ID Database        Table   Partition       State   Blocked By      Type    Transaction ID  Last Heartbeat  Acquired At     User    Hostname     Agent Info
+Time taken: 0.093 seconds, Fetched: 1 row(s)
+
+hive> select count(*) from foodmart.customer_acid_enable;
+Query ID = root_20171123074156_8a4a5852-5f63-43a6-b9eb-de000622c04e
+Total jobs = 1
+Launching Job 1 out of 1
+Tez session was closed. Reopening...
+Session re-established.
+Status: Running (Executing on YARN cluster with App id application_1511370450022_0005)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED     30         30        0        0       0       0
+Reducer 2 ......   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 23.10 s
+--------------------------------------------------------------------------------
+OK
+10280
+Time taken: 29.828 seconds, Fetched: 1 row(s)
+
+Command to create the csv file from hive table which is stored as text type:
+ 
+hive> insert overwrite local directory '/tmp/customer_csv_data' row format delimited fields terminated by ',' select * from customer;
+Query ID = root_20171123074846_32904416-5020-4213-ad0a-8dc94364b1dd
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1511370450022_0005)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 01/01  [==========================>>] 100%  ELAPSED TIME: 0.55 s
+--------------------------------------------------------------------------------
+Moving data to local directory /tmp/customer_csv_data
+OK
+Time taken: 1.189 seconds
+
+Verify data copied to local file system or not
+[root@sandbox ~]# ls -al /tmp/customer_csv_data/
+total 2104
+drwxr-xr-x 2 root root    4096 Nov 23 07:48 .
+drwxrwxrwt 1 root root   20480 Nov 23 07:48 ..
+-rw-r--r-- 1 root root 2108375 Nov 23 07:48 000000_0
+-rw-r--r-- 1 root root   16480 Nov 23 07:48 .000000_0.crc
+[root@sandbox ~]# head -n 10 /tmp/customer_csv_data/000000_0
+1,87462024688,Nowmer,Sheri,A.,2433 Bailey Road,,,,Tlaxiaco,Oaxaca,15057,Mexico,30,271-555-9715,119-555-1969,1961-08-26,M,$30K - $50K,F,4,2,Partial High School,1991-09-10,Bronze,Skilled Manual,Y,4,Sheri Nowmer
+2,87470586299,Whelply,Derrick,I.,2219 Dewing Avenue,,,,Sooke,BC,17172,Canada,101,211-555-7669,807-555-9033,1915-07-03,S,$70K - $90K,M,1,0,Partial High School,1993-03-11,Bronze,Professional,N,3,Derrick Whelply
+3,87475757600,Derry,Jeanne,,7640 First Ave.,,,,Issaquah,WA,73980,USA,21,656-555-2272,221-555-2493,1910-06-21,M,$50K - $70K,F,1,1,Bachelors Degree,1991-06-11,Bronze,Professional,Y,2,Jeanne Derry
+4,87500482201,Spence,Michael,J.,337 Tosca Way,,,,Burnaby,BC,74674,Canada,92,929-555-7279,272-555-2844,1969-06-20,M,$10K - $30K,M,4,4,Partial High School,1994-05-21,Normal,Skilled Manual,N,2,Michael Spence
+5,87514054179,Gutierrez,Maya,,8668 Via Neruda,,,,Novato,CA,57355,USA,42,387-555-7172,260-555-6936,1951-05-10,S,$30K - $50K,F,3,0,Partial College,1992-08-21,Silver,Manual,N,3,Maya Gutierrez
+6,87517782449,Damstra,Robert,F.,1619 Stillman Court,,,,Lynnwood,WA,90792,USA,75,922-555-5465,333-555-5915,1942-10-08,S,$70K - $90K,F,3,0,Bachelors Degree,1992-04-05,Bronze,Professional,Y,3,Robert Damstra
+7,87521172800,Kanagaki,Rebecca,,2860 D Mt. Hood Circle,,,,Tlaxiaco,Oaxaca,13343,Mexico,30,515-555-6247,934-555-9211,1949-03-27,M,$30K - $50K,F,2,1,Partial High School,1991-05-01,Bronze,Manual,Y,3,Rebecca Kanagaki
+8,87539744377,Brunner,Kim,H.,6064 Brodia Court,,,,San Andres,DF,12942,Mexico,106,411-555-6825,130-555-6818,1922-08-10,M,$50K - $70K,M,2,2,Bachelors Degree,1992-06-11,Bronze,Professional,Y,3,Kim Brunner
+9,87544797658,Blumberg,Brenda,C.,7560 Trees Drive,,,,Richmond,BC,17256,Canada,90,815-555-3975,642-555-6483,1979-06-23,M,$10K - $30K,M,5,3,Partial High School,1993-11-14,Normal,Skilled Manual,Y,1,Brenda Blumberg
+10,87568712234,Stanz,Darren,M.,1019 Kenwal Rd.,,,,Lake Oswego,OR,82017,USA,64,847-555-5443,212-555-8635,1949-08-26,S,$30K - $50K,M,4,0,Bachelors Degree,1993-05-04,Golden,Management,N,4,Darren Stanz
+
+
+Command to create the csv file from hive table which is stored as orc type:
+
+
+hive> insert overwrite local directory '/tmp/customer_acid_enable' row format delimited fields terminated by ',' select * from customer_acid_enable;
+Query ID = root_20171123075203_81a51f63-31f8-4ec1-8672-a3bea1d93451
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1511370450022_0005)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED     30         30        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 01/01  [==========================>>] 100%  ELAPSED TIME: 19.52 s
+--------------------------------------------------------------------------------
+Moving data to local directory /tmp/customer_acid_enable
+OK
+Time taken: 20.41 seconds
+
+----------------------------------------------------------Insert record using insert values-----------------------
+
+hive> select count(*) from customer_acid_enable;
+Query ID = root_20171123080837_bd70331d-d756-4894-8c48-c58195ef8df5
+Total jobs = 1
+Launching Job 1 out of 1
+Tez session was closed. Reopening...
+Session re-established.
+Status: Running (Executing on YARN cluster with App id application_1511370450022_0007)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED     30         30        0        0       0       0
+Reducer 2 ......   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 29.12 s
+--------------------------------------------------------------------------------
+OK
+10280
+Time taken: 35.526 seconds, Fetched: 1 row(s)
+
+
+[root@sandbox ~]# ls  /tmp/customer_acid_enable
+000000_0  000002_0  000004_0  000006_0  000008_0  000010_0  000014_0  000016_0  000018_0  000020_0  000022_0  000024_0  000026_0  000028_0
+000001_0  000003_0  000005_0  000007_0  000009_0  000012_0  000015_0  000017_0  000019_0  000021_0  000023_0  000025_0  000027_0  000029_0
+
+[root@sandbox ~]# head -n 10 /tmp/customer_acid_enable/000000_0
+8685,70648254200,Kindle,Dayna,A.,5243 Harmony Way,,,,Royal Oak,BC,87683,100,259-555-5864,701-555-7456,1919-04-23,M,$110K - $130K,M,1,0,High School Degree,1993-01-21,Bronze,Management,Y,2,Dayna Kindle,Canada
+5816,45604586601,Landreth,Barbara,J.,990 Bernauer,,,,Royal Oak,BC,55982,100,685-555-2426,643-555-6076,1959-02-24,M,$30K - $50K,M,2,0,High School Degree,1990-01-13,Bronze,Manual,Y,1,Barbara Landreth,Canada
+10119,85743045210,Wood,Amy,M.,6866 Franklin Canyon Rd.,,,,Richmond,BC,53625,90,115-555-4463,534-555-7428,1953-04-05,M,$30K - $50K,F,2,0,High School Degree,1992-02-11,Bronze,Manual,Y,2,Amy Wood,Canada
+7941,63706133961,Valerio,Dawn,D.,202 Southbrook Dr.,,,,Richmond,BC,66746,90,788-555-9637,660-555-9401,1924-02-10,S,$50K - $70K,M,0,0,Bachelors Degree,1993-02-21,Bronze,Professional,N,2,Dawn Valerio,Canada
+2898,23401517900,Noble,Michelle,I.,7876 Clinton Dr,Unit E,,,Royal Oak,BC,38474,100,534-555-3165,469-555-8186,1966-08-23,M,$110K - $130K,M,3,3,Partial High School,1990-11-03,Golden,IT Developer,Y,3,Michelle Noble,Canada
+7227,57555812597,Cook,Leo,A.,8633 Donegal Road,,,,Richmond,BC,75816,90,701-555-3773,836-555-5823,1953-07-15,S,$50K - $70K,M,4,0,Bachelors Degree,1991-01-09,Bronze,Professional,N,1,Leo Cook,Canada
+9983,84415818500,Tammy,Geraldine,,7770 Springwood Court,,,,Royal Oak,BC,50763,100,148-555-2173,237-555-6967,1957-01-16,S,$70K - $90K,F,3,0,Bachelors Degree,1990-04-07,Bronze,Professional,N,2,Geraldine Tammy,Canada
+7957,63822230696,Stockham,David,G,3111 Creekridge Lane,,,,Royal Oak,BC,88618,100,307-555-2440,419-555-5861,1933-03-03,M,$70K - $90K,F,3,3,High School Degree,1994-09-26,Golden,Professional,Y,2,David Stockham,Canada
+3741,29753396500,Clayton,Fereshteh,,1907 Pinecrest Dr,,,,Royal Oak,BC,44935,100,586-555-1832,129-555-3425,1922-11-05,M,$150K +,M,0,0,High School Degree,1991-06-19,Golden,Management,Y,3,Fereshteh Clayton,Canada
+5487,42932666500,Windham,Tuesday,,7582 Kenneth Ct.,,,,Royal Oak,BC,43334,100,484-555-2011,573-555-6804,1928-12-03,S,$70K - $90K,M,3,0,Bachelors Degree,1990-03-04,Bronze,Professional,N,2,Tuesday Windham,Canada
+
+Total number of record present in table customer_acid_enable(Hive table) = 10280
+[root@sandbox ~]# cat /tmp/customer_acid_enable/* | wc -l
+10280
+
+
+
+
